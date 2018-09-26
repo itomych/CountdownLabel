@@ -508,12 +508,13 @@ extension LTMorphingLabel {
     }
     
     override open func drawText(in rect: CGRect) {
-        if !morphingEnabled || limboOfCharacters().count == 0 {
+        let limbo = limboOfCharacters()
+        if !morphingEnabled || limbo.count == 0 {
             super.drawText(in: rect)
             return
         }
         
-        for charLimbo in limboOfCharacters() {
+        for charLimbo in limbo {
             let charRect = charLimbo.rect
             let willAvoidDefaultDrawing: Bool = {
                 if let closure = drawingClosures[
@@ -534,10 +535,6 @@ extension LTMorphingLabel {
 
                 let s = String(charLimbo.char)
                 s.draw(in: charRect, withAttributes: attrs)
-                let b = UIBezierPath(rect: charRect)
-                b.lineWidth = 1
-                UIColor.red.setStroke()
-//                b.stroke()
             }
         }
     }
