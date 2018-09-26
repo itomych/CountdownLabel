@@ -75,12 +75,12 @@ typealias LTMorphingSkipFramesClosure =
 }
 
 // MARK: - LTMorphingLabel
-@IBDesignable open class LTMorphingLabel: UILabel {
+open class LTMorphingLabel: UILabel {
     
-    @IBInspectable open var morphingProgress: Float = 0.0
-    @IBInspectable open var morphingDuration: Float = 0.6
-    @IBInspectable open var morphingCharacterDelay: Float = 0.026
-    @IBInspectable open var morphingEnabled: Bool = true
+    var morphingProgress: Float = 0.0
+    var morphingDuration: Float = 0.6
+    var morphingCharacterDelay: Float = 0.026
+    var morphingEnabled: Bool = true
 
     @IBOutlet open weak var delegate: LTMorphingLabelDelegate?
     open var morphingEffect: LTMorphingEffect = .scale
@@ -91,7 +91,7 @@ typealias LTMorphingSkipFramesClosure =
     var progressClosures = [String: LTMorphingManipulateProgressClosure]()
     var skipFramesClosures = [String: LTMorphingSkipFramesClosure]()
     var diffResults: LTStringDiffResult?
-    var previousText = ""
+    var previousText: NSAttributedString?
     
     var currentFrame = 0
     var totalFrames = 0
@@ -119,16 +119,33 @@ typealias LTMorphingSkipFramesClosure =
         }
     }
     
-    override open var text: String! {
+    open override var text: String? {
         get {
-            return super.text ?? ""
+            return super.text
         }
         set {
-            guard text != newValue else { return }
+            if let newValue = newValue {
+                attributedText = NSAttributedString(string: newValue, attributes: [
+                    NSAttributedStringKey.font: font,
+                    NSAttributedStringKey.foregroundColor: textColor
+                    ])
+            } else {
+                attributedText = nil
+            }
+            
+        }
+    }
+    
+    open override var attributedText: NSAttributedString? {
+        get {
+            return super.attributedText
+        }
+        set {
+            guard attributedText != newValue else { return }
 
-            previousText = text ?? ""
-            diffResults = previousText.diffWith(newValue)
-            super.text = newValue ?? ""
+            previousText = attributedText
+            diffResults = previousText?.string.diffWith(newValue?.string)
+            super.attributedText = newValue
             
             morphingProgress = 0.0
             currentFrame = 0
@@ -143,7 +160,7 @@ typealias LTMorphingSkipFramesClosure =
             if presentingInIB {
                 morphingDuration = 0.01
                 morphingProgress = 0.5
-            } else if previousText != text {
+            } else if previousText != attributedText {
                 displayLink.isPaused = false
                 let closureKey = "\(morphingEffect.description)\(LTMorphingPhases.start)"
                 if let closure = startClosures[closureKey] {
@@ -157,8 +174,13 @@ typealias LTMorphingSkipFramesClosure =
     
     open override func setNeedsLayout() {
         super.setNeedsLayout()
-        previousRects = rectsOfEachCharacter(previousText, withFont: font)
-        newRects = rectsOfEachCharacter(text ?? "", withFont: font)
+        if let previous = previousText {
+            previousRects = rectsOfEachCharacter(previous)
+        }
+        if let newAttributed = attributedText {
+            newRects = rectsOfEachCharacter(newAttributed)
+        }
+        
     }
     
     override open var bounds: CGRect {
@@ -223,13 +245,13 @@ extension LTMorphingLabel {
             }
             totalFrames = Int(ceil(morphingDuration / frameRate))
 
-            let totalDelay = Float((text!).count) * morphingCharacterDelay
+            let totalDelay = Float((attributedText!.string).count) * morphingCharacterDelay
             totalDelayFrames = Int(ceil(totalDelay / frameRate))
         }
 
         currentFrame += 1
 
-        if previousText != text && currentFrame < totalFrames + totalDelayFrames + 5 {
+        if previousText != attributedText && currentFrame < totalFrames + totalDelayFrames + 5 {
             morphingProgress += 1.0 / Float(totalFrames)
 
             let closureKey = "\(morphingEffect.description)\(LTMorphingPhases.skipFrames)"
@@ -255,16 +277,16 @@ extension LTMorphingLabel {
     
     // Could be enhanced by kerning text:
     // http://stackoverflow.com/questions/21443625/core-text-calculate-letter-frame-in-ios
-    func rectsOfEachCharacter(_ textToDraw: String, withFont font: UIFont) -> [CGRect] {
+    func rectsOfEachCharacter(_ textToDraw: NSAttributedString) -> [CGRect] {
         var charRects = [CGRect]()
         var leftOffset: CGFloat = 0.0
         
-        charHeight = "Leg".size(withAttributes: [.font: font]).height
-        
-        let topOffset = (bounds.size.height - charHeight) / 2.0
-
-        for char in textToDraw {
-            let charSize = String(char).size(withAttributes: [.font: font])
+        for i in 0..<textToDraw.string.count {
+            let char = textToDraw.string[i]
+            let charAttributes = attributes(at: i)
+            let charHeight = String(char).size(withAttributes: charAttributes).height
+            let topOffset = (intrinsicContentSize.height - charHeight) - (bounds.height - charHeight) / 4
+            let charSize = String(char).size(withAttributes: charAttributes)
             charRects.append(
                 CGRect(
                     origin: CGPoint(
@@ -358,8 +380,14 @@ extension LTMorphingLabel {
                 rect: currentRect,
                 alpha: currentAlpha,
                 size: currentFontSize,
-                drawingProgress: 0.0
+                drawingProgress: 0.0,
+                attributes: attributes(at: index)
             )
+    }
+    
+    func attributes(at index: Int) -> [NSAttributedStringKey: Any] {
+        let attr = attributedText?.attributes(at: index, effectiveRange: nil)
+        return attr ?? [.foregroundColor: textColor, .font: font]
     }
     
     func limboOfNewCharacter(
@@ -390,7 +418,8 @@ extension LTMorphingLabel {
                     rect: currentRect.offsetBy(dx: 0, dy: yOffset),
                     alpha: CGFloat(morphingProgress),
                     size: currentFontSize,
-                    drawingProgress: 0.0
+                    drawingProgress: 0.0,
+                    attributes: attributes(at: index)
                 )
             }
     }
@@ -399,56 +428,62 @@ extension LTMorphingLabel {
         var limbo = [LTCharacterLimbo]()
         
         // Iterate original characters
-        for (i, character) in previousText.enumerated() {
-            var progress: Float = 0.0
-            
-            if let closure = progressClosures[
-                "\(morphingEffect.description)\(LTMorphingPhases.progress)"
-                ] {
+        if let previous = previousText {
+            for (i, character) in previous.string.enumerated() {
+                var progress: Float = 0.0
+                
+                if let closure = progressClosures[
+                    "\(morphingEffect.description)\(LTMorphingPhases.progress)"
+                    ] {
                     progress = closure(i, morphingProgress, false)
-            } else {
-                progress = min(1.0, max(0.0, morphingProgress + morphingCharacterDelay * Float(i)))
+                } else {
+                    progress = min(1.0, max(0.0, morphingProgress + morphingCharacterDelay * Float(i)))
+                }
+                
+                let limboOfCharacter = limboOfOriginalCharacter(character, index: i, progress: progress)
+                limbo.append(limboOfCharacter)
             }
-            
-            let limboOfCharacter = limboOfOriginalCharacter(character, index: i, progress: progress)
-            limbo.append(limboOfCharacter)
         }
         
+        
         // Add new characters
-        for (i, character) in (text!).enumerated() {
-            if i >= diffResults?.0.count {
-                break
-            }
-            
-            var progress: Float = 0.0
-            
-            if let closure = progressClosures[
-                "\(morphingEffect.description)\(LTMorphingPhases.progress)"
-                ] {
+        if let newAttributed = attributedText {
+            for (i, character) in newAttributed.string.enumerated() {
+                if i >= diffResults?.0.count {
+                    break
+                }
+                
+                var progress: Float = 0.0
+                
+                if let closure = progressClosures[
+                    "\(morphingEffect.description)\(LTMorphingPhases.progress)"
+                    ] {
                     progress = closure(i, morphingProgress, true)
-            } else {
-                progress = min(1.0, max(0.0, morphingProgress - morphingCharacterDelay * Float(i)))
-            }
-            
-            // Don't draw character that already exists
-            if diffResults?.skipDrawingResults[i] == true {
-                continue
-            }
-            
-            if let diffResult = diffResults?.0[i] {
-                switch diffResult {
-                case .moveAndAdd, .replace, .add, .delete:
-                    let limboOfCharacter = limboOfNewCharacter(
-                        character,
-                        index: i,
-                        progress: progress
-                    )
-                    limbo.append(limboOfCharacter)
-                default:
-                    ()
+                } else {
+                    progress = min(1.0, max(0.0, morphingProgress - morphingCharacterDelay * Float(i)))
+                }
+                
+                // Don't draw character that already exists
+                if diffResults?.skipDrawingResults[i] == true {
+                    continue
+                }
+                
+                if let diffResult = diffResults?.0[i] {
+                    switch diffResult {
+                    case .moveAndAdd, .replace, .add, .delete:
+                        let limboOfCharacter = limboOfNewCharacter(
+                            character,
+                            index: i,
+                            progress: progress
+                        )
+                        limbo.append(limboOfCharacter)
+                    default:
+                        ()
+                    }
                 }
             }
         }
+        
         
         return limbo
     }
@@ -480,7 +515,6 @@ extension LTMorphingLabel {
         
         for charLimbo in limboOfCharacters() {
             let charRect = charLimbo.rect
-            
             let willAvoidDefaultDrawing: Bool = {
                 if let closure = drawingClosures[
                     "\(morphingEffect.description)\(LTMorphingPhases.draw)"
@@ -491,17 +525,77 @@ extension LTMorphingLabel {
                 }(charLimbo)
 
             if !willAvoidDefaultDrawing {
-                var attrs: [NSAttributedStringKey: Any] = [
-                    .foregroundColor: textColor.withAlphaComponent(charLimbo.alpha)
-                ]
-
-                if let font = UIFont(name: font.fontName, size: charLimbo.size) {
+                var attrs: [NSAttributedStringKey: Any] = charLimbo.attributes
+                let tColor = attrs[NSAttributedStringKey.foregroundColor] as? UIColor ?? textColor
+                attrs[.foregroundColor] = tColor?.withAlphaComponent(charLimbo.alpha)
+                if attrs[.font] == nil {
                     attrs[.font] = font
                 }
+
                 let s = String(charLimbo.char)
                 s.draw(in: charRect, withAttributes: attrs)
+                let b = UIBezierPath(rect: charRect)
+                b.lineWidth = 1
+                UIColor.red.setStroke()
+//                b.stroke()
             }
         }
     }
+}
 
+extension String {
+    subscript (i: Int) -> Character {
+        return self[index(startIndex, offsetBy: i)]
+    }
+    subscript (bounds: CountableRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[start ..< end]
+    }
+    subscript (bounds: CountableClosedRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[start ... end]
+    }
+    subscript (bounds: CountablePartialRangeFrom<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(endIndex, offsetBy: -1)
+        return self[start ... end]
+    }
+    subscript (bounds: PartialRangeThrough<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[startIndex ... end]
+    }
+    subscript (bounds: PartialRangeUpTo<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[startIndex ..< end]
+    }
+}
+extension Substring {
+    subscript (i: Int) -> Character {
+        return self[index(startIndex, offsetBy: i)]
+    }
+    subscript (bounds: CountableRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[start ..< end]
+    }
+    subscript (bounds: CountableClosedRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[start ... end]
+    }
+    subscript (bounds: CountablePartialRangeFrom<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(endIndex, offsetBy: -1)
+        return self[start ... end]
+    }
+    subscript (bounds: PartialRangeThrough<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[startIndex ... end]
+    }
+    subscript (bounds: PartialRangeUpTo<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        return self[startIndex ..< end]
+    }
 }

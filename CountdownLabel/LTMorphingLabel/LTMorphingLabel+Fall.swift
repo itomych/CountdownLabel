@@ -61,7 +61,8 @@ extension LTMorphingLabel {
                 rect: self.previousRects[index],
                 alpha: CGFloat(1.0 - progress),
                 size: self.font.pointSize,
-                drawingProgress: CGFloat(progress))
+                drawingProgress: CGFloat(progress),
+                attributes: self.attributes(at: index))
         }
         
         effectClosures["Fall\(LTMorphingPhases.appear)"] = {
@@ -77,7 +78,8 @@ extension LTMorphingLabel {
                 rect: self.newRects[index].offsetBy(dx: 0, dy: yOffset),
                 alpha: CGFloat(self.morphingProgress),
                 size: currentFontSize,
-                drawingProgress: 0.0
+                drawingProgress: 0.0,
+                attributes: self.attributes(at: index)
             )
         }
         

@@ -52,7 +52,9 @@ extension LTMorphingLabel {
                 rect: currentRect,
                 alpha: currentAlpha,
                 size: self.font.pointSize,
-                drawingProgress: 0.0)
+                drawingProgress: 0.0,
+                attributes: self.attributes(at: index)
+            )
         }
         
         effectClosures["Evaporate\(LTMorphingPhases.appear)"] = {
@@ -66,9 +68,9 @@ extension LTMorphingLabel {
                 rect: self.newRects[index].offsetBy(dx: 0, dy: yOffset),
                 alpha: CGFloat(self.morphingProgress),
                 size: self.font.pointSize,
-                drawingProgress: 0.0
+                drawingProgress: 0.0,
+                attributes: self.attributes(at: index)
             )
         }
     }
-    
 }

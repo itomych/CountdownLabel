@@ -40,7 +40,8 @@ extension LTMorphingLabel {
                 rect: self.previousRects[index],
                 alpha: CGFloat(1.0 - progress),
                 size: self.font.pointSize,
-                drawingProgress: CGFloat(progress))
+                drawingProgress: CGFloat(progress),
+                attributes: self.attributes(at: index))
         }
         
         effectClosures["Pixelate\(LTMorphingPhases.appear)"] = {
@@ -51,7 +52,8 @@ extension LTMorphingLabel {
                 rect: self.newRects[index],
                 alpha: CGFloat(progress),
                 size: self.font.pointSize,
-                drawingProgress: CGFloat(1.0 - progress)
+                drawingProgress: CGFloat(1.0 - progress),
+                attributes: self.attributes(at: index)
             )
         }
         

@@ -36,9 +36,10 @@ import UIKit
     case sparkle
     case burn
     case anvil
+    case lift
     
     public static let allValues = [
-        "Scale", "Evaporate", "Fall", "Pixelate", "Sparkle", "Burn", "Anvil"
+        "Scale", "Evaporate", "Fall", "Pixelate", "Sparkle", "Burn", "Anvil", "Lift"
     ]
     
     public var description: String {
@@ -55,6 +56,8 @@ import UIKit
             return "Burn"
         case .anvil:
             return "Anvil"
+        case .lift:
+            return "Lift"
         default:
             return "Scale"
         }

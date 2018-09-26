@@ -281,12 +281,26 @@ extension CountdownLabel {
             : self.surplusTime(date)
         
         if let countdownAttributedText = countdownAttributedText {
-            let attrTextInRange = NSAttributedString(string: formattedText, attributes: countdownAttributedText.attributes)
-            let attributedString = NSMutableAttributedString(string: countdownAttributedText.text)
-            attributedString.replaceCharacters(in: range, with: attrTextInRange)
+            var attributes = countdownAttributedText.attributes ?? [:]
+            if attributes[NSAttributedStringKey.font] == nil {
+                attributes[NSAttributedStringKey.font] = font
+            }
+            if attributes[NSAttributedStringKey.foregroundColor] == nil {
+                attributes[NSAttributedStringKey.foregroundColor] = textColor
+            }
+            let attrTextInRange = NSMutableAttributedString(string: formattedText, attributes: attributes)
+            if let additionalFormatting = countdownAttributedText.additionalFormatting {
+                additionalFormatting.forEach { key, attributes in
+                    if let rangeOfKey = formattedText.range(of: key)?.nsRange {
+                        attrTextInRange.addAttributes(attributes, range: rangeOfKey)
+                    }
+                }
+            }
             
+            let attributedString = NSMutableAttributedString(string: countdownAttributedText.text, attributes: attributes)
+            attributedString.replaceCharacters(in: range, with: attrTextInRange)
+
             attributedText = attributedString
-            text = attributedString.string
         } else {
             text = formattedText
         }
@@ -374,6 +388,7 @@ public enum CountdownEffect {
     case Pixelate
     case Scale
     case Sparkle
+    case Lift
     
     func toLTMorphing() -> LTMorphingEffect? {
         switch self {
@@ -385,6 +400,7 @@ public enum CountdownEffect {
         case .Pixelate  : return .pixelate
         case .Scale     : return .scale
         case .Sparkle   : return .sparkle
+        case .Lift      : return .lift
         }
     }
 }
@@ -393,10 +409,21 @@ public class CountdownAttributedText: NSObject {
     internal let text: String
     internal let replacement: String
     internal let attributes: [NSAttributedStringKey: Any]?
+    let additionalFormatting: [String: [NSAttributedStringKey: Any]]?
    
-    public init(text: String, replacement: String, attributes: [NSAttributedStringKey: Any]? = nil) {
+    public init(text: String = "%@", replacement: String = "%@", attributes: [NSAttributedStringKey: Any]? = nil, additionalFormatting: [String: [NSAttributedStringKey: Any]]? = nil) {
         self.text = text
         self.replacement = replacement
         self.attributes = attributes
+        self.additionalFormatting = additionalFormatting
+    }
+}
+
+extension Range where Bound == String.Index {
+    var nsRange: NSRange {
+        var nsRange = NSRange()
+        nsRange.location = lowerBound.encodedOffset
+        nsRange.length = upperBound.encodedOffset - lowerBound.encodedOffset
+        return nsRange
     }
 }

@@ -99,7 +99,9 @@ extension LTMorphingLabel {
                 rect: self.previousRects[index],
                 alpha: CGFloat(1.0 - progress),
                 size: self.font.pointSize,
-                drawingProgress: 0.0)
+                drawingProgress: 0.0,
+                attributes: self.attributes(at: index)
+            )
         }
         
         effectClosures["Sparkle\(LTMorphingPhases.appear)"] = {
@@ -139,7 +141,8 @@ extension LTMorphingLabel {
                 rect: self.newRects[index],
                 alpha: CGFloat(self.morphingProgress),
                 size: self.font.pointSize,
-                drawingProgress: CGFloat(progress)
+                drawingProgress: CGFloat(progress),
+                attributes: self.attributes(at: index)
             )
         }
         

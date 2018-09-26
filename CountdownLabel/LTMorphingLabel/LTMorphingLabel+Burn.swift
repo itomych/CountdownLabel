@@ -91,7 +91,8 @@ extension LTMorphingLabel {
                 rect: self.previousRects[index],
                 alpha: CGFloat(1.0 - progress),
                 size: self.font.pointSize,
-                drawingProgress: 0.0
+                drawingProgress: 0.0,
+                attributes: self.attributes(at: index)
             )
         }
         
@@ -169,7 +170,8 @@ extension LTMorphingLabel {
                 rect: self.newRects[index],
                 alpha: 1.0,
                 size: self.font.pointSize,
-                drawingProgress: CGFloat(progress)
+                drawingProgress: CGFloat(progress),
+                attributes: self.attributes(at: index)
             )
         }
         
