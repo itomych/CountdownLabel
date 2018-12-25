@@ -312,11 +312,15 @@ extension CountdownLabel {
         let calendar = Calendar.init(identifier: .gregorian);
         var labelText = timeFormat;
         let comp = calendar.dateComponents([.day, .hour, .minute, .second], from: date1970 as Date, to: to1970Date)
-        
+        var daysPresent = false
         if let day = comp.day ,let _ = timeFormat.range(of: "dd"){
             labelText = labelText.replacingOccurrences(of: "dd", with: String.init(format: "%02ld", day))
+            daysPresent = true
         }
-        if let hour = comp.hour ,let _ = timeFormat.range(of: "hh"){
+        if var hour = comp.hour ,let _ = timeFormat.range(of: "hh"){
+            if !daysPresent, let days = comp.day {
+                hour += days * 24
+            }
             labelText = labelText.replacingOccurrences(of: "hh", with: String.init(format: "%02ld", hour))
         }
         if let hour = comp.hour ,let _ = timeFormat.range(of: "HH"){
