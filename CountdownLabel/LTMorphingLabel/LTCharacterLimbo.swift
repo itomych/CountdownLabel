@@ -34,7 +34,7 @@ public struct LTCharacterLimbo: CustomDebugStringConvertible {
     public var alpha: CGFloat
     public var size: CGFloat
     public var drawingProgress: CGFloat = 0.0
-    public var attributes: [NSAttributedStringKey : Any]
+    public var attributes: [NSAttributedString.Key : Any]
     
     public var debugDescription: String {
         return "Character: '\(char)'"

@@ -115,8 +115,8 @@ extension LTMorphingLabel {
                             width: rect.size.width,
                             height: 1
                         )
-                        layer.renderMode = kCAEmitterLayerAdditive
-                        layer.emitterMode = kCAEmitterLayerOutline
+                        layer.renderMode = CAEmitterLayerRenderMode.additive
+                        layer.emitterMode = CAEmitterLayerEmitterMode.outline
                         cell.emissionLongitude = CGFloat(Double.pi / 2)
                         cell.scale = self.font.pointSize / 160.0
                         cell.scaleSpeed = self.font.pointSize / 100.0
@@ -143,8 +143,8 @@ extension LTMorphingLabel {
                             width: rect.size.width,
                             height: 10
                         )
-                        layer.renderMode = kCAEmitterLayerAdditive
-                        layer.emitterMode = kCAEmitterLayerVolume
+                        layer.renderMode = CAEmitterLayerRenderMode.additive
+                        layer.emitterMode = CAEmitterLayerEmitterMode.volume
                         cell.emissionLongitude = CGFloat(Double.pi / 2)
                         cell.scale = self.font.pointSize / 40.0
                         cell.scaleSpeed = self.font.pointSize / 100.0

@@ -126,8 +126,8 @@ open class LTMorphingLabel: UILabel {
         set {
             if let newValue = newValue {
                 attributedText = NSAttributedString(string: newValue, attributes: [
-                    NSAttributedStringKey.font: font,
-                    NSAttributedStringKey.foregroundColor: textColor
+                    NSAttributedString.Key.font: font,
+                    NSAttributedString.Key.foregroundColor: textColor
                     ])
             } else {
                 attributedText = nil
@@ -208,12 +208,12 @@ open class LTMorphingLabel: UILabel {
             target: self,
             selector: #selector(LTMorphingLabel.displayFrameTick)
         )
-        displayLink.add(to: .current, forMode: .commonModes)
+        displayLink.add(to: .current, forMode: .common)
         return displayLink
         }()
 
     deinit {
-        displayLink.remove(from: .current, forMode: .commonModes)
+        displayLink.remove(from: .current, forMode: .common)
         displayLink.invalidate()
     }
     
@@ -385,7 +385,7 @@ extension LTMorphingLabel {
             )
     }
     
-    func attributes(at index: Int) -> [NSAttributedStringKey: Any] {
+    func attributes(at index: Int) -> [NSAttributedString.Key: Any] {
         let attr = attributedText?.attributes(at: index, effectiveRange: nil)
         return attr ?? [.foregroundColor: textColor, .font: font]
     }
@@ -526,8 +526,8 @@ extension LTMorphingLabel {
                 }(charLimbo)
 
             if !willAvoidDefaultDrawing {
-                var attrs: [NSAttributedStringKey: Any] = charLimbo.attributes
-                let tColor = attrs[NSAttributedStringKey.foregroundColor] as? UIColor ?? textColor
+                var attrs: [NSAttributedString.Key: Any] = charLimbo.attributes
+                let tColor = attrs[NSAttributedString.Key.foregroundColor] as? UIColor ?? textColor
                 attrs[.foregroundColor] = tColor?.withAlphaComponent(charLimbo.alpha)
                 if attrs[.font] == nil {
                     attrs[.font] = font

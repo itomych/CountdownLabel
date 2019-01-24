@@ -282,11 +282,11 @@ extension CountdownLabel {
         
         if let countdownAttributedText = countdownAttributedText {
             var attributes = countdownAttributedText.attributes ?? [:]
-            if attributes[NSAttributedStringKey.font] == nil {
-                attributes[NSAttributedStringKey.font] = font
+            if attributes[NSAttributedString.Key.font] == nil {
+                attributes[NSAttributedString.Key.font] = font
             }
-            if attributes[NSAttributedStringKey.foregroundColor] == nil {
-                attributes[NSAttributedStringKey.foregroundColor] = textColor
+            if attributes[NSAttributedString.Key.foregroundColor] == nil {
+                attributes[NSAttributedString.Key.foregroundColor] = textColor
             }
             let attrTextInRange = NSMutableAttributedString(string: formattedText, attributes: attributes)
             if let additionalFormatting = countdownAttributedText.additionalFormatting {
@@ -360,7 +360,7 @@ extension CountdownLabel {
                                                        repeats: true)
         
         // register to NSrunloop
-        RunLoop.current.add(timer, forMode: RunLoopMode.commonModes)
+        RunLoop.current.add(timer, forMode: .common)
         counting = true
     }
     
@@ -412,10 +412,10 @@ public enum CountdownEffect {
 public class CountdownAttributedText: NSObject {
     internal let text: String
     internal let replacement: String
-    internal let attributes: [NSAttributedStringKey: Any]?
-    let additionalFormatting: [String: [NSAttributedStringKey: Any]]?
+    internal let attributes: [NSAttributedString.Key: Any]?
+    let additionalFormatting: [String: [NSAttributedString.Key: Any]]?
    
-    public init(text: String = "%@", replacement: String = "%@", attributes: [NSAttributedStringKey: Any]? = nil, additionalFormatting: [String: [NSAttributedStringKey: Any]]? = nil) {
+    public init(text: String = "%@", replacement: String = "%@", attributes: [NSAttributedString.Key: Any]? = nil, additionalFormatting: [String: [NSAttributedString.Key: Any]]? = nil) {
         self.text = text
         self.replacement = replacement
         self.attributes = attributes
